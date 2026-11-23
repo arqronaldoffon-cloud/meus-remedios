@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Meus Remédios">
+<meta name="theme-color" content="#ffffff">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Meus Remédios</title>
+<style>
+  :root{
+    --fs:1;
+    --bg:#ffffff; --ink:#111111; --muted:#444; --line:#cfcfcf;
+    --green:#0a7a2f; --green-bg:#e3f6e8; --red:#b00020; --red-bg:#fde7ea;
+    --amber:#8a5a00; --amber-bg:#fff3d6; --blue:#0b4fb3; --blue-bg:#e6efff;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+    font-size:calc(22px * var(--fs)); line-height:1.35}
+  body{padding-bottom:calc(120px * var(--fs))}
+  header{position:sticky;top:0;background:#fff;border-bottom:3px solid var(--ink);
+    padding:14px 16px;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:10px}
+  header h1{margin:0;font-size:1.25em}
+  #clock{font-size:1.4em;font-weight:800;font-variant-numeric:tabular-nums}
+  #datebar{padding:6px 16px 0;color:var(--muted);font-size:.9em}
+  main{padding:12px 16px;max-width:760px;margin:0 auto}
+  h2{font-size:1.15em;margin:18px 0 10px}
+  button{font:inherit;cursor:pointer;border-radius:14px;border:3px solid var(--ink);
+    background:#fff;color:var(--ink);padding:14px 18px;min-height:64px;font-weight:700}
+  button:focus-visible,input:focus-visible,select:focus-visible{outline:4px solid var(--blue);outline-offset:2px}
+  .btn-big{width:100%;font-size:1.15em;min-height:80px}
+  .btn-green{background:var(--green);border-color:var(--green);color:#fff}
+  .btn-blue{background:var(--blue);border-color:var(--blue);color:#fff}
+  .btn-red{background:var(--red);border-color:var(--red);color:#fff}
+  .btn-ghost{border-width:2px;font-weight:600;min-height:52px;padding:8px 14px;font-size:.85em}
+  .card{border:3px solid var(--line);border-radius:18px;padding:14px;margin:0 0 14px;background:#fff}
+  .card.late{border-color:var(--red);background:var(--red-bg)}
+  .card.done{border-color:var(--green);background:var(--green-bg)}
+  .card.next{border-color:var(--blue)}
+  .row{display:flex;align-items:center;gap:12px}
+  .pill{width:42px;height:42px;border-radius:50%;border:3px solid var(--ink);flex:0 0 auto}
+  .time{font-size:1.6em;font-weight:800;font-variant-numeric:tabular-nums}
+  .name{font-size:1.2em;font-weight:800}
+  .sub{color:var(--muted)}
+  .status{font-weight:800;margin-top:6px}
+  .status.late{color:var(--red)} .status.done{color:var(--green)} .status.next{color:var(--blue)}
+  .actions{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+  .actions button{flex:1 1 auto}
+  label{display:block;font-weight:700;margin:14px 0 6px}
+  input,select{font:inherit;width:100%;padding:14px;border:3px solid var(--ink);border-radius:12px;min-height:64px;background:#fff;color:var(--ink)}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{min-height:56px;padding:8px 16px;border-width:2px}
+  .chip.on{background:var(--ink);color:#fff}
+  .swatch{width:56px;height:56px;border-radius:50%;padding:0;min-height:0}
+  .swatch.on{outline:5px solid var(--blue);outline-offset:3px}
+  nav{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:3px solid var(--ink);
+    display:grid;grid-template-columns:repeat(4,1fr);z-index:6}
+  nav button{border:0;border-radius:0;min-height:calc(84px * var(--fs));font-size:.8em;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:6px 2px}
+  nav button .ic{font-size:1.6em;line-height:1}
+  nav button.on{background:var(--ink);color:#fff}
+  .banner{border-radius:16px;padding:14px;margin:0 0 14px;font-weight:700}
+  .banner.warn{background:var(--amber-bg);border:3px solid var(--amber);color:#4a3000}
+  .banner.info{background:var(--blue-bg);border:3px solid var(--blue);color:#06306e}
+  .banner.bad{background:var(--red-bg);border:3px solid var(--red);color:#5c0010}
+  .bpval{font-size:1.5em;font-weight:800;font-variant-numeric:tabular-nums}
+  .tag{display:inline-block;padding:4px 12px;border-radius:999px;font-weight:800;font-size:.85em;border:2px solid}
+  .t-ok{background:var(--green-bg);color:var(--green);border-color:var(--green)}
+  .t-att{background:var(--amber-bg);color:var(--amber);border-color:var(--amber)}
+  .t-high{background:#ffe6d5;color:#9a3a00;border-color:#9a3a00}
+  .t-bad{background:var(--red-bg);color:var(--red);border-color:var(--red)}
+  .t-low{background:var(--blue-bg);color:var(--blue);border-color:var(--blue)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .empty{text-align:center;padding:24px 8px;color:var(--muted)}
+  /* Alerta em tela cheia */
+  #alert{position:fixed;inset:0;z-index:50;display:none;flex-direction:column;align-items:center;justify-content:center;
+    padding:24px;text-align:center;background:#fff8c4;animation:flash 1s steps(2) infinite}
+  #alert.show{display:flex}
+  @keyframes flash{50%{background:#ffd400}}
+  #alert .big{font-size:2em;font-weight:900;margin:8px 0}
+  #alert .pill{width:90px;height:90px;border-width:5px}
+  #alert .actions{width:100%;max-width:520px;flex-direction:column}
+  #toast{position:fixed;left:16px;right:16px;bottom:calc(100px * var(--fs));z-index:40;background:var(--ink);color:#fff;
+    border-radius:14px;padding:14px;font-weight:700;display:none;text-align:center}
+  #toast.show{display:block}
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:30;display:none;align-items:flex-end;justify-content:center}
+  .modal.show{display:flex}
+  .sheet{background:#fff;width:100%;max-width:760px;max-height:92vh;overflow:auto;border-radius:22px 22px 0 0;padding:18px 16px 28px}
+  svg text{font-family:inherit}
+  @media (prefers-reduced-motion:reduce){#alert{animation:none;background:#ffd400}}
+</style>
+</head>
+<body>
+<header>
+  <h1>💊 Meus Remédios</h1>
+  <div class="row" style="gap:10px"><div id="clock">--:--</div>
+  <button id="sosBtn" class="btn-red" style="min-height:56px;padding:8px 14px" aria-label="Emergência">🆘 SOS</button></div>
+</header>
+<div id="datebar"></div>
+<main id="view"></main>
+
+<nav id="nav">
+  <button data-tab="hoje"><span class="ic">📅</span>Hoje</button>
+  <button data-tab="remedios"><span class="ic">💊</span>Remédios</button>
+  <button data-tab="pressao"><span class="ic">❤️</span>Pressão</button>
+  <button data-tab="ajustes"><span class="ic">⚙️</span>Ajustes</button>
+</nav>
+
+<div id="alert" role="alertdialog" aria-live="assertive">
+  <div style="font-size:1.3em;font-weight:800">⏰ HORA DO REMÉDIO</div>
+  <div id="alertPill" class="pill" style="margin:14px auto"></div>
+  <div id="alertName" class="big"></div>
+  <div id="alertDose" style="font-size:1.3em;font-weight:700"></div>
+  <div id="alertNote" style="font-size:1.1em;margin-top:6px"></div>
+  <div class="actions" style="margin-top:22px">
+    <button class="btn-big btn-green" id="alertTake">✅ JÁ TOMEI</button>
+    <button class="btn-big" id="alertSnooze">⏱️ Lembrar em 10 minutos</button>
+    <button class="btn-big" id="alertSpeak">🔊 Ouvir de novo</button>
+  </div>
+</div>
+
+<div id="modal" class="modal"><div class="sheet" id="sheet"></div></div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script id="app-state" type="application/json">{"meds":[],"taken":{},"bp":[],"settings":{"fs":1,"voice":true,"family":""}}</script>
+
+<script>
+(function(){
+  // Cópia intacta do documento, feita antes de qualquer alteração na tela.
+  var PRISTINE = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+  var LS_KEY = "meus-remedios-v1";
+
+  var state = JSON.parse(document.getElementById("app-state").textContent);
+  try {
+    var local = localStorage.getItem(LS_KEY);
+    if (local) {
+      var l = JSON.parse(local);
+      if ((l.savedAt||0) > (state.savedAt||0)) state = l;
+    }
+  } catch(e){}
+  state.meds = state.meds||[]; state.taken = state.taken||{}; state.bp = state.bp||[];
+  state.settings = Object.assign({fs:1,voice:true,family:""}, state.settings||{});
+
+  var artifactApi = null, ttsApi = null;
+  if (window.claude && window.claude.use) {
+    window.claude.use("artifact").then(function(a){ artifactApi = a; }).catch(function(){});
+    window.claude.use("tts").then(function(t){ ttsApi = t; }).catch(function(){});
+  }
+
+  // ---------- utilidades ----------
+  var $ = function(s,r){return (r||document).querySelector(s)};
+  function pad(n){return (n<10?"0":"")+n}
+  function todayKey(d){d=d||new Date();return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())}
+  function hhmm(d){return pad(d.getHours())+":"+pad(d.getMinutes())}
+  function minutes(t){var p=t.split(":");return (+p[0])*60+(+p[1])}
+  function nowMin(){var d=new Date();return d.getHours()*60+d.getMinutes()}
+  function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
+  function uid(){return Math.random().toString(36).slice(2,9)}
+  function horaFalada(t){var p=t.split(":"),h=+p[0],m=+p[1];return h+(h===1?" hora":" horas")+(m?" e "+m+" minutos":"")}
+  var DIAS=["domingo","segunda-feira","terça-feira","quarta-feira","quinta-feira","sexta-feira","sábado"];
+  var MESES=["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+  var COLORS=[["#ffffff","Branco"],["#f2d22e","Amarelo"],["#f08a24","Laranja"],["#e0303e","Vermelho"],["#e889c0","Rosa"],["#3b7be0","Azul"],["#2ea44f","Verde"],["#8b5a2b","Marrom"]];
+
+  // ---------- salvar ----------
+  var saveTimer=null;
+  function save(){
+    state.savedAt = Date.now();
+    // remove registros de doses com mais de 90 dias
+    var lim = new Date(); lim.setDate(lim.getDate()-90); var lk=todayKey(lim);
+    Object.keys(state.taken).forEach(function(k){ if(k<lk) delete state.taken[k]; });
+    if (state.bp.length>500) state.bp = state.bp.slice(-500);
+    try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch(e){}
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(publishState, 1500);
+  }
+  function publishState(){
+    if (!artifactApi) return;
+    var json = JSON.stringify(state).replace(/</g,"\\u003c");
+    var html = PRISTINE.replace(/(<script id="app-state" type="application\/json">)[\s\S]*?(<\/script>)/, function(_,a,b){return a+json+b});
+    artifactApi.publish(html).catch(function(){});
+  }
+
+  // ---------- som, vibração e voz ----------
+  var audioCtx=null;
+  function unlockAudio(){
+    try{ if(!audioCtx){var AC=window.AudioContext||window.webkitAudioContext; if(AC) audioCtx=new AC();}
+      if(audioCtx && audioCtx.state==="suspended") audioCtx.resume(); }catch(e){}
+    var b=$("#soundBanner"); if(b) b.remove();
+    soundUnlocked=true;
+  }
+  var soundUnlocked=false;
+  document.addEventListener("click", unlockAudio, {capture:true});
+  function beep(){
+    if(!audioCtx) return;
+    try{
+      var t0=audioCtx.currentTime;
+      [0,0.35,0.7].forEach(function(o){
+        var osc=audioCtx.createOscillator(), g=audioCtx.createGain();
+        osc.type="square"; osc.frequency.value=880;
+        g.gain.setValueAtTime(0.0001,t0+o); g.gain.exponentialRampToValueAtTime(0.6,t0+o+0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001,t0+o+0.28);
+        osc.connect(g); g.connect(audioCtx.destination); osc.start(t0+o); osc.stop(t0+o+0.3);
+      });
+    }catch(e){}
+    try{ if(navigator.vibrate) navigator.vibrate([600,250,600,250,600]); }catch(e){}
+  }
+  function speak(text){
+    if(!state.settings.voice) return;
+    if(ttsApi){ ttsApi.speak(text,{language:"pt-BR",rate:0.85}).catch(function(){ speakBrowser(text); }); return; }
+    speakBrowser(text);
+  }
+  function speakBrowser(text){
+    try{
+      if(!window.speechSynthesis) return;
+      speechSynthesis.cancel();
+      var u=new SpeechSynthesisUtterance(text); u.lang="pt-BR"; u.rate=0.85; u.volume=1;
+      speechSynthesis.speak(u);
+    }catch(e){}
+  }
+  function toast(msg){var t=$("#toast");t.textContent=msg;t.classList.add("show");clearTimeout(toast._t);toast._t=setTimeout(function(){t.classList.remove("show")},3000)}
+
+  // ---------- doses do dia ----------
+  function doseKey(m,t){return m.id+"@"+t}
+  function todaysDoses(){
+    var tk=todayKey(), taken=state.taken[tk]||{}, nm=nowMin(), list=[];
+    state.meds.forEach(function(m){ (m.times||[]).forEach(function(t){
+      var k=doseKey(m,t), at=taken[k];
+      var st = at ? "done" : (minutes(t) < nm-15 ? "late" : (minutes(t)<=nm ? "due" : "next"));
+      list.push({med:m,time:t,key:k,takenAt:at,status:st});
+    });});
+    list.sort(function(a,b){return minutes(a.time)-minutes(b.time)});
+    return list;
+  }
+  function markTaken(key, medId){
+    var tk=todayKey(); state.taken[tk]=state.taken[tk]||{};
+    state.taken[tk][key]=hhmm(new Date());
+    var m=state.meds.find(function(x){return x.id===medId});
+    if(m && typeof m.stock==="number" && m.stock>0) m.stock=Math.max(0, +(m.stock-(m.qty||1)).toFixed(2));
+    delete snoozed[key]; alerted[key]=true;
+    save(); render();
+    toast("Muito bem! Registrado às "+hhmm(new Date())+".");
+  }
+  function undoTaken(key, medId){
+    var tk=todayKey(); if(state.taken[tk]) delete state.taken[tk][key];
+    var m=state.meds.find(function(x){return x.id===medId});
+    if(m && typeof m.stock==="number") m.stock=+(m.stock+(m.qty||1)).toFixed(2);
+    save(); render();
+  }
+  function daysLeft(m){
+    if(typeof m.stock!=="number" || !(m.times||[]).length) return null;
+    return Math.floor(m.stock/((m.qty||1)*m.times.length));
+  }
+
+  // ---------- alertas ----------
+  var alerted={}, snoozed={}, currentAlert=null, repeatTimer=null;
+  function checkAlerts(){
+    if(currentAlert) return;
+    var nm=nowMin(), nowMs=Date.now();
+    var due=todaysDoses().filter(function(d){
+      if(d.takenAt) return false;
+      var dm=minutes(d.time);
+      if(dm>nm || nm-dm>180) return false;
+      if(snoozed[d.key] && snoozed[d.key]>nowMs) return false;
+      if(alerted[d.key] && !snoozed[d.key]) return false;
+      return true;
+    });
+    if(due.length) showAlert(due[0]);
+  }
+  function alertText(d){
+    var m=d.med;
+    return "Atenção. Está na hora do remédio. "+m.name+". "+(m.dose||"")+". "+(m.note?m.note+".":"")+" Depois de tomar, aperte o botão verde: já tomei.";
+  }
+  function showAlert(d){
+    currentAlert=d; alerted[d.key]=true; delete snoozed[d.key];
+    $("#alertPill").style.background=d.med.color||"#fff";
+    $("#alertName").textContent=d.med.name;
+    $("#alertDose").textContent=(d.med.dose||"")+" • "+d.time;
+    $("#alertNote").textContent=d.med.note||"";
+    $("#alert").classList.add("show");
+    beep(); speak(alertText(d));
+    clearInterval(repeatTimer);
+    repeatTimer=setInterval(function(){ beep(); speak(alertText(d)); }, 60000);
+  }
+  function closeAlert(){ $("#alert").classList.remove("show"); clearInterval(repeatTimer); currentAlert=null;
+    try{ if(window.speechSynthesis) speechSynthesis.cancel(); if(ttsApi) ttsApi.stop(); }catch(e){} }
+  $("#alertTake").onclick=function(){ var d=currentAlert; closeAlert(); if(d) markTaken(d.key,d.med.id); };
+  $("#alertSnooze").onclick=function(){ var d=currentAlert; closeAlert(); if(d){ snoozed[d.key]=Date.now()+10*60000; toast("Vou lembrar de novo em 10 minutos."); } };
+  $("#alertSpeak").onclick=function(){ if(currentAlert) speak(alertText(currentAlert)); };
+
+  // ---------- pressão ----------
+  function normBP(v){ v=parseFloat(String(v).replace(",",".")); if(isNaN(v)) return NaN; return v<35 ? Math.round(v*10) : Math.round(v); }
+  function classify(s,d){
+    if(s>=180||d>=110) return {c:"t-bad",t:"Muito alta",msg:"Pressão muito alta. Se tiver dor de cabeça forte, dor no peito, falta de ar, fraqueza ou visão turva, procure atendimento AGORA (SAMU 192). Sem sintomas, descanse 5 minutos, meça de novo e avise seu médico hoje."};
+    if(s<90||d<60) return {c:"t-low",t:"Baixa",msg:"Pressão baixa. Sente-se ou deite-se. Se tiver tontura forte ou desmaio, procure atendimento."};
+    if(s>=160||d>=100) return {c:"t-bad",t:"Alta",msg:"Pressão alta. Meça de novo após 5 minutos sentado e avise seu médico."};
+    if(s>=140||d>=90) return {c:"t-high",t:"Elevada",msg:"Acima do ideal. Anote e mostre ao médico na próxima consulta."};
+    if(s>=130||d>=85) return {c:"t-att",t:"Limítrofe",msg:"Um pouco acima do ideal. Continue acompanhando."};
+    return {c:"t-ok",t:"Boa",msg:"Pressão dentro do esperado. Muito bem!"};
+  }
+  function fmtPorExtenso(s,d){ var a=s/10,b=d/10; var f=function(x){return (Math.round(x*10)/10).toString().replace(".",",")}; return f(a)+" por "+f(b); }
+  function bpChart(list){
+    if(list.length<2) return "";
+    var W=700,H=280,P=50, n=list.length;
+    var vals=[]; list.forEach(function(r){vals.push(r.s,r.d)});
+    var lo=Math.min(50,Math.min.apply(null,vals)-10), hi=Math.max(190,Math.max.apply(null,vals)+10);
+    var x=function(i){return P+(W-P-20)*(n===1?0:i/(n-1))}, y=function(v){return H-30-(H-60)*(v-lo)/(hi-lo)};
+    var line=function(k){return list.map(function(r,i){return (i?"L":"M")+x(i).toFixed(1)+" "+y(r[k]).toFixed(1)}).join(" ")};
+    var g="";
+    [[140,"#9a3a00","14 (limite)"],[90,"#9a3a00","9 (limite)"]].forEach(function(h){
+      g+='<line x1="'+P+'" x2="'+(W-20)+'" y1="'+y(h[0])+'" y2="'+y(h[0])+'" stroke="'+h[1]+'" stroke-width="2" stroke-dasharray="8 6"/>'+
+         '<text x="'+(W-22)+'" y="'+(y(h[0])-6)+'" text-anchor="end" font-size="18" fill="'+h[1]+'">'+h[2]+'</text>';
+    });
+    var dots=function(k,col){return list.map(function(r,i){return '<circle cx="'+x(i)+'" cy="'+y(r[k])+'" r="7" fill="'+col+'"/>'}).join("")};
+    return '<svg viewBox="0 0 '+W+' '+H+'" width="100%" role="img" aria-label="Gráfico das últimas medições">'+g+
+      '<path d="'+line("s")+'" fill="none" stroke="#b00020" stroke-width="4"/>'+dots("s","#b00020")+
+      '<path d="'+line("d")+'" fill="none" stroke="#0b4fb3" stroke-width="4"/>'+dots("d","#0b4fb3")+
+      '<text x="'+P+'" y="22" font-size="20" font-weight="700" fill="#b00020">● Máxima</text>'+
+      '<text x="'+(P+150)+'" y="22" font-size="20" font-weight="700" fill="#0b4fb3">● Mínima</text></svg>';
+  }
+
+  // ---------- telas ----------
+  var tab=(location.hash||"#hoje").slice(1);
+  if(["hoje","remedios","pressao","ajustes"].indexOf(tab)<0) tab="hoje";
+  function setTab(t){ tab=t; try{ if(location.hash!=="#"+t) history.replaceState(null,"","#"+t);}catch(e){} render(); window.scrollTo(0,0); }
+  Array.prototype.forEach.call(document.querySelectorAll("#nav button"),function(b){ b.onclick=function(){ setTab(b.dataset.tab); }; });
+  window.addEventListener("hashchange",function(){ var t=location.hash.slice(1); if(t && t!==tab && ["hoje","remedios","pressao","ajustes"].indexOf(t)>=0){tab=t;render();} });
+
+  function render(){
+    document.documentElement.style.setProperty("--fs", state.settings.fs);
+    Array.prototype.forEach.call(document.querySelectorAll("#nav button"),function(b){ b.classList.toggle("on", b.dataset.tab===tab); b.setAttribute("aria-current", b.dataset.tab===tab?"page":"false"); });
+    var v=$("#view");
+    if(tab==="hoje") v.innerHTML=viewHoje();
+    if(tab==="remedios") v.innerHTML=viewRemedios();
+    if(tab==="pressao") v.innerHTML=viewPressao();
+    if(tab==="ajustes") v.innerHTML=viewAjustes();
+    bind();
+  }
+
+  function soundBannerHtml(){
+    return soundUnlocked ? "" : '<div id="soundBanner" class="banner info" role="button" tabindex="0">🔔 Toque aqui uma vez para ativar o som e a voz dos alertas.</div>';
+  }
+
+  function viewHoje(){
+    var doses=todaysDoses(), h="";
+    h+=soundBannerHtml();
+    if(!state.meds.length){
+      return h+'<div class="empty"><div style="font-size:3em">💊</div><p><b>Nenhum remédio cadastrado ainda.</b></p><p>Comece cadastrando os remédios que você toma.</p></div>'+
+        '<button class="btn-big btn-blue" data-act="goAdd">➕ Cadastrar remédio</button>';
+    }
+    var done=doses.filter(function(d){return d.takenAt}).length;
+    var late=doses.filter(function(d){return d.status==="late"||d.status==="due"}).length;
+    h+='<div class="banner '+(late?"warn":"info")+'">'+(late? "⚠️ Você tem "+late+" remédio"+(late>1?"s":"")+" para tomar agora." : "Hoje você já tomou "+done+" de "+doses.length+" doses.")+'</div>';
+    var low=state.meds.filter(function(m){var d=daysLeft(m);return d!==null&&d<=7});
+    low.forEach(function(m){ var d=daysLeft(m); h+='<div class="banner '+(d<=2?"bad":"warn")+'">🛒 '+esc(m.name)+': '+(d<=0?"acabou! Compre hoje.":"dá para só mais "+d+" dia"+(d>1?"s":"")+". Lembre de comprar.")+'</div>'; });
+    var firstNext=doses.find(function(d){return d.status==="next"});
+    doses.forEach(function(d){
+      var m=d.med, cls=d.status==="done"?"done":(d.status==="late"||d.status==="due")?"late":(d===firstNext?"next":"");
+      var stTxt = d.status==="done" ? "✅ Tomado às "+d.takenAt : d.status==="late" ? "❗ Atrasado — tome agora" : d.status==="due" ? "⏰ Está na hora" : (d===firstNext?"➡️ Próximo":"Mais tarde");
+      var stCls = d.status==="done"?"done":(d.status==="late"||d.status==="due")?"late":"next";
+      h+='<div class="card '+cls+'"><div class="row"><div class="pill" style="background:'+esc(m.color||"#fff")+'"></div>'+
+         '<div style="flex:1"><div class="time">'+d.time+'</div><div class="name">'+esc(m.name)+'</div><div class="sub">'+esc(m.dose||"")+(m.note?" • "+esc(m.note):"")+'</div></div></div>'+
+         '<div class="status '+stCls+'">'+stTxt+'</div><div class="actions">'+
+         (d.takenAt ? '<button class="btn-ghost" data-act="undo" data-key="'+d.key+'" data-med="'+m.id+'">Desfazer</button>'
+                    : '<button class="btn-big btn-green" data-act="take" data-key="'+d.key+'" data-med="'+m.id+'">✅ TOMEI</button>')+
+         '<button class="btn-ghost" data-act="say" data-med="'+m.id+'" data-time="'+d.time+'" aria-label="Ouvir">🔊 Ouvir</button></div></div>';
+    });
+    h+='<p class="sub" style="margin-top:20px">Deixe esta página aberta e o celular com som ligado para receber os alertas.</p>';
+    return h;
+  }
+
+  function viewRemedios(){
+    var h='<button class="btn-big btn-blue" data-act="goAdd">➕ Cadastrar remédio</button><h2>Meus remédios ('+state.meds.length+')</h2>';
+    if(!state.meds.length) h+='<div class="empty">Nenhum remédio cadastrado.</div>';
+    state.meds.forEach(function(m){
+      var dl=daysLeft(m);
+      h+='<div class="card"><div class="row"><div class="pill" style="background:'+esc(m.color||"#fff")+'"></div><div style="flex:1">'+
+        '<div class="name">'+esc(m.name)+'</div><div class="sub">'+esc(m.dose||"")+'</div>'+
+        '<div><b>Horários:</b> '+(m.times||[]).join(" • ")+'</div>'+
+        (m.note?'<div class="sub">📝 '+esc(m.note)+'</div>':'')+
+        (typeof m.stock==="number"?'<div><b>Estoque:</b> '+m.stock+' '+(dl!==null?'(≈ '+dl+' dias)':'')+'</div>':'')+
+        '</div></div><div class="actions"><button class="btn-ghost" data-act="edit" data-med="'+m.id+'">✏️ Editar</button>'+
+        (typeof m.stock==="number"?'<button class="btn-ghost" data-act="buy" data-med="'+m.id+'">🛒 Comprei mais</button>':'')+'</div></div>';
+    });
+    return h;
+  }
+
+  function viewPressao(){
+    var h='<h2>Anotar pressão</h2><div class="card">'+
+      '<p class="sub" style="margin-top:0">Pode escrever do jeito que o médico fala: <b>12 por 8</b> → máxima 12, mínima 8.</p>'+
+      '<div class="grid2"><div><label for="bpS">Máxima</label><input id="bpS" inputmode="decimal" placeholder="12"></div>'+
+      '<div><label for="bpD">Mínima</label><input id="bpD" inputmode="decimal" placeholder="8"></div></div>'+
+      '<label for="bpP">Batimentos (opcional)</label><input id="bpP" inputmode="numeric" placeholder="72">'+
+      '<div style="margin-top:16px"><button class="btn-big btn-green" data-act="saveBP">💾 Salvar medição</button></div></div>';
+    var list=state.bp.slice(-14);
+    if(state.bp.length){
+      var last=state.bp[state.bp.length-1], c=classify(last.s,last.d);
+      h+='<h2>Última medição</h2><div class="card"><div class="bpval">'+fmtPorExtenso(last.s,last.d)+'</div><div class="sub">'+last.s+'/'+last.d+' mmHg'+(last.p?' • '+last.p+' bpm':'')+' • '+fmtDate(last.at)+'</div>'+
+        '<div style="margin-top:8px"><span class="tag '+c.c+'">'+c.t+'</span></div><p>'+c.msg+'</p></div>';
+      if(list.length>1) h+='<h2>Últimas medições</h2><div class="card">'+bpChart(list)+'</div>';
+      h+='<h2>Histórico</h2>';
+      state.bp.slice().reverse().slice(0,30).forEach(function(r){
+        var c=classify(r.s,r.d), i=state.bp.indexOf(r);
+        h+='<div class="card"><div class="row" style="justify-content:space-between;flex-wrap:wrap"><div><div class="bpval" style="font-size:1.2em">'+fmtPorExtenso(r.s,r.d)+'</div><div class="sub">'+fmtDate(r.at)+(r.p?' • '+r.p+' bpm':'')+'</div></div><span class="tag '+c.c+'">'+c.t+'</span></div>'+
+          '<div class="actions"><button class="btn-ghost" data-act="delBP" data-i="'+i+'">🗑️ Apagar</button></div></div>';
+      });
+    }
+    h+='<p class="sub">As faixas seguem a Diretriz Brasileira de Hipertensão como referência geral. Quem define sua meta de pressão é o seu médico.</p>';
+    return h;
+  }
+  function fmtDate(ms){var d=new Date(ms);return pad(d.getDate())+"/"+pad(d.getMonth()+1)+" às "+hhmm(d)}
+
+  function viewAjustes(){
+    var fs=state.settings.fs;
+    return '<h2>Tamanho da letra</h2><div class="chips">'+
+      [[1,"Normal"],[1.2,"Grande"],[1.4,"Muito grande"]].map(function(o){return '<button class="chip '+(fs===o[0]?"on":"")+'" data-act="fs" data-v="'+o[0]+'" style="font-size:'+(o[0]*0.9)+'em">A '+o[1]+'</button>'}).join("")+'</div>'+
+      '<h2>Voz</h2><div class="chips"><button class="chip '+(state.settings.voice?"on":"")+'" data-act="voice" data-v="1">🔊 Ler os avisos em voz alta</button><button class="chip '+(!state.settings.voice?"on":"")+'" data-act="voice" data-v="0">🔇 Sem voz</button></div>'+
+      '<div class="actions"><button class="btn-ghost" data-act="testAlert">🔔 Testar som e voz</button></div>'+
+      '<h2>Contato da família</h2><label for="fam">Nome e telefone de quem ajuda</label><input id="fam" value="'+esc(state.settings.family)+'" placeholder="Ex.: Maria (filha) 31 99999-0000">'+
+      '<div class="actions"><button class="btn-ghost" data-act="saveFam">💾 Salvar contato</button></div>'+
+      (state.settings.family?'<div class="banner info" style="margin-top:12px">📞 '+esc(state.settings.family)+'</div>':'')+
+      '<h2>Levar para o médico</h2><p class="sub">Copia um resumo dos remédios, das doses esquecidas e das medições de pressão dos últimos 30 dias. Depois é só colar no WhatsApp.</p>'+
+      '<button class="btn-big" data-act="report">📋 Copiar resumo</button>'+
+      '<div id="reportBox"></div>';
+  }
+
+  function report(){
+    var L=[], d=new Date(), lim=new Date(); lim.setDate(lim.getDate()-30);
+    L.push("RESUMO PARA O MÉDICO — "+pad(d.getDate())+"/"+pad(d.getMonth()+1)+"/"+d.getFullYear());
+    L.push(""); L.push("REMÉDIOS EM USO:");
+    state.meds.forEach(function(m){ L.push("- "+m.name+" — "+(m.dose||"")+" — "+(m.times||[]).join(", ")+(m.note?" ("+m.note+")":"")); });
+    var total=0, tomadas=0;
+    for(var i=1;i<=30;i++){ var day=new Date(); day.setDate(day.getDate()-i); var k=todayKey(day), tk=state.taken[k]||{};
+      state.meds.forEach(function(m){ (m.times||[]).forEach(function(t){ total++; if(tk[doseKey(m,t)]) tomadas++; }); }); }
+    L.push(""); L.push("DOSES REGISTRADAS (30 dias, sem contar hoje): "+tomadas+" de "+total+(total?" ("+Math.round(100*tomadas/total)+"%)":""));
+    var bp=state.bp.filter(function(r){return r.at>=lim.getTime()});
+    L.push(""); L.push("PRESSÃO ("+bp.length+" medições):");
+    if(bp.length){
+      var ms=Math.round(bp.reduce(function(a,r){return a+r.s},0)/bp.length), md=Math.round(bp.reduce(function(a,r){return a+r.d},0)/bp.length);
+      L.push("Média: "+ms+"/"+md+" mmHg");
+      bp.forEach(function(r){ L.push(fmtDate(r.at)+": "+r.s+"/"+r.d+(r.p?" ("+r.p+" bpm)":"")); });
+    }
+    return L.join("\n");
+  }
+
+  function openMedForm(m){
+    var isNew=!m; m=m||{id:uid(),name:"",dose:"1 comprimido",qty:1,times:["08:00"],color:"#ffffff",note:"",stock:null};
+    var times=(m.times||[]).slice(), color=m.color||"#ffffff";
+    var sheet=$("#sheet");
+    function draw(){
+      sheet.innerHTML='<h2 style="margin-top:0">'+(isNew?"Novo remédio":"Editar remédio")+'</h2>'+
+        '<label for="fName">Nome do remédio</label><input id="fName" value="'+esc(m.name)+'" placeholder="Ex.: Losartana 50 mg">'+
+        '<label for="fDose">Quanto tomar</label><input id="fDose" value="'+esc(m.dose)+'" placeholder="Ex.: 1 comprimido">'+
+        '<label>Horários</label><div class="chips">'+
+          ["06:00","07:00","08:00","10:00","12:00","14:00","16:00","18:00","20:00","22:00"].map(function(t){return '<button class="chip '+(times.indexOf(t)>=0?"on":"")+'" data-t="'+t+'">'+t+'</button>'}).join("")+
+          times.filter(function(t){return ["06:00","07:00","08:00","10:00","12:00","14:00","16:00","18:00","20:00","22:00"].indexOf(t)<0}).map(function(t){return '<button class="chip on" data-t="'+t+'">'+t+'</button>'}).join("")+
+        '</div><div class="grid2" style="margin-top:10px"><input id="fCustom" type="time" aria-label="Outro horário"><button class="btn-ghost" id="fAddTime">➕ Outro horário</button></div>'+
+        '<label>Cor do comprimido (ajuda a reconhecer)</label><div class="chips">'+
+          COLORS.map(function(c){return '<button class="swatch '+(color===c[0]?"on":"")+'" data-c="'+c[0]+'" style="background:'+c[0]+'" aria-label="'+c[1]+'" title="'+c[1]+'"></button>'}).join("")+'</div>'+
+        '<label for="fNote">Observação (opcional)</label><input id="fNote" value="'+esc(m.note)+'" placeholder="Ex.: em jejum, depois do almoço">'+
+        '<div class="grid2"><div><label for="fStock">Quantos tem em casa</label><input id="fStock" inputmode="decimal" value="'+(typeof m.stock==="number"?m.stock:"")+'" placeholder="Ex.: 30"></div>'+
+        '<div><label for="fQty">Unidades por dose</label><input id="fQty" inputmode="decimal" value="'+(m.qty||1)+'"></div></div>'+
+        '<div class="actions" style="margin-top:20px;flex-direction:column"><button class="btn-big btn-green" id="fSave">💾 Salvar</button>'+
+        '<button class="btn-big" id="fCancel">Cancelar</button>'+(isNew?'':'<button class="btn-big btn-red" id="fDel">🗑️ Apagar este remédio</button>')+'</div><div id="fConfirm"></div>';
+      Array.prototype.forEach.call(sheet.querySelectorAll("[data-t]"),function(b){ b.onclick=function(){ keep(); var t=b.dataset.t,i=times.indexOf(t); if(i>=0) times.splice(i,1); else times.push(t); times.sort(); draw(); }; });
+      Array.prototype.forEach.call(sheet.querySelectorAll("[data-c]"),function(b){ b.onclick=function(){ keep(); color=b.dataset.c; draw(); }; });
+      $("#fAddTime").onclick=function(){ keep(); var v=$("#fCustom").value; if(v && times.indexOf(v)<0){ times.push(v); times.sort(); } draw(); };
+      $("#fCancel").onclick=closeModal;
+      $("#fSave").onclick=function(){
+        keep();
+        if(!m.name.trim()){ toast("Escreva o nome do remédio."); $("#fName").focus(); return; }
+        if(!times.length){ toast("Escolha pelo menos um horário."); return; }
+        m.times=times.slice(); m.color=color;
+        if(isNew) state.meds.push(m); else { var i=state.meds.findIndex(function(x){return x.id===m.id}); state.meds[i]=m; }
+        save(); closeModal(); render(); toast("Remédio salvo!");
+      };
+      var del=$("#fDel"); if(del) del.onclick=function(){
+        $("#fConfirm").innerHTML='<div class="banner bad" style="margin-top:14px">Tem certeza? <div class="actions"><button class="btn-red" id="fDelYes">Sim, apagar</button><button id="fDelNo">Não</button></div></div>';
+        $("#fDelYes").onclick=function(){ state.meds=state.meds.filter(function(x){return x.id!==m.id}); save(); closeModal(); render(); toast("Remédio apagado."); };
+        $("#fDelNo").onclick=function(){ $("#fConfirm").innerHTML=""; };
+      };
+    }
+    function keep(){
+      m.name=$("#fName").value; m.dose=$("#fDose").value; m.note=$("#fNote").value;
+      var s=$("#fStock").value.trim().replace(",","."); m.stock = s===""?null:Math.max(0,parseFloat(s)||0);
+      var q=parseFloat($("#fQty").value.replace(",","."))||1; m.qty=q;
+    }
+    draw(); $("#modal").classList.add("show");
+  }
+  function openSOS(){
+    var fam=state.settings.family||"", famDigits=fam.replace(/\D/g,"");
+    var item=function(num,label,ic,cls){return '<a href="tel:'+num+'" style="text-decoration:none"><div class="card" style="border-color:'+(cls||"var(--red)")+';margin-bottom:12px"><div class="row"><div style="font-size:2em">'+ic+'</div><div style="flex:1"><div class="name">'+label+'</div><div class="time" style="color:var(--red)">'+esc(num)+'</div></div><div style="font-size:1.6em">📞</div></div></div></a>';};
+    $("#sheet").innerHTML='<h2 style="margin-top:0">🆘 Emergência</h2><p class="sub" style="margin-top:0">Toque para ligar. Se não abrir a ligação, disque o número que aparece.</p>'+
+      item("192","SAMU — ambulância","🚑")+item("193","Bombeiros","🚒")+item("190","Polícia","🚓")+
+      (famDigits.length>=8 ? item(famDigits, esc(fam.replace(/[\d\s()+-]+$/,"").trim()||"Família"),"👨‍👩‍👧","var(--blue)") :
+        '<div class="banner info">Cadastre o telefone de um familiar em ⚙️ Ajustes para ele aparecer aqui.</div>')+
+      '<button class="btn-big" id="sosClose">Fechar</button>';
+    $("#sosClose").onclick=closeModal;
+    $("#modal").classList.add("show");
+    speak("Emergência. Toque em SAMU para ambulância, ou em Bombeiros.");
+  }
+  $("#sosBtn").onclick=openSOS;
+  function closeModal(){ $("#modal").classList.remove("show"); $("#sheet").innerHTML=""; }
+  $("#modal").addEventListener("click",function(e){ if(e.target.id==="modal") closeModal(); });
+
+  function bind(){
+    var sb=$("#soundBanner"); if(sb){ sb.onclick=function(){ unlockAudio(); speak("Pronto. Os alertas estão ativados."); }; }
+    Array.prototype.forEach.call(document.querySelectorAll("#view [data-act]"),function(b){
+      b.onclick=function(){
+        var a=b.dataset.act;
+        if(a==="take") markTaken(b.dataset.key,b.dataset.med);
+        if(a==="undo") undoTaken(b.dataset.key,b.dataset.med);
+        if(a==="goAdd") openMedForm(null);
+        if(a==="edit") openMedForm(JSON.parse(JSON.stringify(state.meds.find(function(x){return x.id===b.dataset.med}))));
+        if(a==="say"){ var m=state.meds.find(function(x){return x.id===b.dataset.med}); speak(m.name+". "+(m.dose||"")+", às "+horaFalada(b.dataset.time)+". "+(m.note||"")); }
+        if(a==="buy"){ var mm=state.meds.find(function(x){return x.id===b.dataset.med}); openBuy(mm); }
+        if(a==="saveBP") saveBP();
+        if(a==="delBP"){ state.bp.splice(+b.dataset.i,1); save(); render(); }
+        if(a==="fs"){ state.settings.fs=+b.dataset.v; save(); render(); }
+        if(a==="voice"){ state.settings.voice=b.dataset.v==="1"; save(); render(); }
+        if(a==="testAlert"){ unlockAudio(); beep(); speak("Teste. Este é o som do alerta do seu remédio."); }
+        if(a==="saveFam"){ state.settings.family=$("#fam").value.trim(); save(); render(); toast("Contato salvo."); }
+        if(a==="report"){
+          var txt=report();
+          $("#reportBox").innerHTML='<pre style="white-space:pre-wrap;font:inherit;font-size:.85em;border:2px solid var(--line);border-radius:12px;padding:12px;margin-top:12px">'+esc(txt)+'</pre>';
+          try{ navigator.clipboard.writeText(txt).then(function(){toast("Resumo copiado! Cole no WhatsApp.")},function(){toast("Não deu para copiar sozinho. Selecione o texto abaixo e copie.")}); }
+          catch(e){ toast("Selecione o texto abaixo e copie."); }
+        }
+      };
+    });
+  }
+  function openBuy(m){
+    $("#sheet").innerHTML='<h2 style="margin-top:0">Comprei mais: '+esc(m.name)+'</h2><label for="bQty">Quantos comprimidos chegaram?</label><input id="bQty" inputmode="numeric" placeholder="Ex.: 30">'+
+      '<div class="actions" style="flex-direction:column;margin-top:18px"><button class="btn-big btn-green" id="bOk">💾 Somar ao estoque</button><button class="btn-big" id="bNo">Cancelar</button></div>';
+    $("#bOk").onclick=function(){ var q=parseFloat($("#bQty").value.replace(",","."))||0; m.stock=+((m.stock||0)+q).toFixed(2); save(); closeModal(); render(); toast("Estoque atualizado: "+m.stock); };
+    $("#bNo").onclick=closeModal;
+    $("#modal").classList.add("show");
+  }
+  function saveBP(){
+    var s=normBP($("#bpS").value), d=normBP($("#bpD").value), p=parseInt($("#bpP").value,10);
+    if(isNaN(s)||isNaN(d)||s<60||s>260||d<30||d>160||d>=s){ toast("Confira os números. Exemplo: máxima 12 e mínima 8."); return; }
+    state.bp.push({at:Date.now(),s:s,d:d,p:isNaN(p)?null:p}); save(); render();
+    var c=classify(s,d); speak("Pressão "+fmtPorExtenso(s,d)+". "+c.msg);
+  }
+
+  // ---------- relógio ----------
+  var lastDay=todayKey();
+  function tick(){
+    var d=new Date();
+    $("#clock").textContent=hhmm(d);
+    $("#datebar").textContent=DIAS[d.getDay()][0].toUpperCase()+DIAS[d.getDay()].slice(1)+", "+d.getDate()+" de "+MESES[d.getMonth()];
+    if(todayKey()!==lastDay){ lastDay=todayKey(); alerted={}; snoozed={}; }
+    if(tab==="hoje" && !$("#modal").classList.contains("show")) render();
+    checkAlerts();
+  }
+  render(); tick();
+  setInterval(tick, 20000);
+})();
+</script>
+<script>if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){});});}</script>
+</body>
+</html>
